@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { eventPackages, bookings } from '@/services/mockData';
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,6 +20,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { Booking } from '@/types';
 
 const EventPackageCard: React.FC<{ eventPackage: typeof eventPackages[0] }> = ({ eventPackage }) => {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -39,8 +41,8 @@ const EventPackageCard: React.FC<{ eventPackage: typeof eventPackages[0] }> = ({
     
     setIsSubmitting(true);
     
-    // Create new booking entry
-    const newBooking = {
+    // Create new booking entry - ensure status is one of the allowed literal types
+    const newBooking: Booking = {
       id: uuidv4(),
       userId: user?.id || 'user-1',
       userName: user?.name || 'Test User',
