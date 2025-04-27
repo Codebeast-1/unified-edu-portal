@@ -20,6 +20,9 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
+// Define a type for the valid user roles
+type UserRole = 'admin' | 'student' | 'faculty';
+
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -35,54 +38,54 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       label: 'Dashboard',
       icon: <LayoutDashboard size={20} />,
       path: `/${user?.role}/dashboard`,
-      roles: ['admin', 'student', 'faculty'] as const,
+      roles: ['admin', 'student', 'faculty'] as UserRole[],
     },
     {
       label: 'Notifications',
       icon: <Bell size={20} />,
       path: `/${user?.role}/notifications`,
-      roles: ['admin', 'student', 'faculty'] as const,
+      roles: ['admin', 'student', 'faculty'] as UserRole[],
     },
     {
       label: 'Request Approval',
       icon: <CheckCircle size={20} />,
       path: '/admin/requests',
-      roles: ['admin'] as const,
+      roles: ['admin'] as UserRole[],
     },
     {
       label: 'High Priority',
       icon: <AlertCircle size={20} />,
       path: '/admin/high-priority',
-      roles: ['admin'] as const,
+      roles: ['admin'] as UserRole[],
     },
     {
       label: 'LT/CR Booking',
       icon: <Calendar size={20} />,
       path: `/${user?.role}/venue-booking`,
-      roles: ['student', 'faculty'] as const,
+      roles: ['student', 'faculty'] as UserRole[],
     },
     {
       label: 'Event Booking',
       icon: <BookOpen size={20} />,
       path: `/${user?.role}/event-booking`,
-      roles: ['student', 'faculty'] as const,
+      roles: ['student', 'faculty'] as UserRole[],
     },
     {
       label: 'Activity',
       icon: <Calendar size={20} />,
       path: `/${user?.role}/activity`,
-      roles: ['student', 'faculty'] as const,
+      roles: ['student', 'faculty'] as UserRole[],
     },
     {
       label: 'Contact Us',
       icon: <MessageSquare size={20} />,
       path: '/contact',
-      roles: ['admin', 'student', 'faculty'] as const,
+      roles: ['admin', 'student', 'faculty'] as UserRole[],
     },
   ];
   
   const filteredNavItems = navItems.filter(
-    item => user?.role && item.roles.includes(user.role)
+    item => user?.role && (item.roles as UserRole[]).includes(user.role as UserRole)
   );
   
   return (
