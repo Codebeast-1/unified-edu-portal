@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { venues, timeSlots } from '@/services/mockData';
+import { venues, timeSlots, bookings } from '@/services/mockData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -9,9 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TimeSlot, Venue } from '@/types';
+import { TimeSlot, Venue, Booking } from '@/types';
 import { toast } from 'sonner';
 import { CheckCircle, Users, Calendar } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   Dialog,
@@ -30,7 +31,9 @@ const VenueCard: React.FC<{ venue: Venue }> = ({ venue }) => {
   const [description, setDescription] = useState('');
   const [attendees, setAttendees] = useState('');
   const [targetAudience, setTargetAudience] = useState('');
+  const [facultyRef, setFacultyRef] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
   
   const venueTimeSlots = timeSlots.filter(slot => slot.isAvailable);
   const availableDates = Array.from(new Set(venueTimeSlots.map(slot => slot.date)));
@@ -55,15 +58,40 @@ const VenueCard: React.FC<{ venue: Venue }> = ({ venue }) => {
     
     setIsSubmitting(true);
     
-    // Simulate API call
+    const newBooking: Booking = {
+      id: uuidv4(),
+      userId: user?.id || 'user-1',
+      userName: user?.name || 'Test User',
+      userRole: (user?.role as 'student' | 'faculty') || 'student',
+      venueId: venue.id,
+      venueName: venue.name,
+      purpose,
+      description,
+      attendees: parseInt(attendees),
+      timeSlots: selectedSlots,
+      status: facultyRef ? 'high-priority' : 'pending',
+      createdAt: new Date().toISOString(),
+      targetAudience,
+      ...(facultyRef ? {
+        facultyRecommendation: {
+          facultyId: 'faculty-1',
+          facultyName: facultyRef,
+          comment: `Recommended by ${facultyRef}`,
+        }
+      } : {})
+    };
+    
+    bookings.unshift(newBooking);
+    
     setTimeout(() => {
-      toast.success('Booking request submitted successfully!');
+      toast.success('Venue booking request submitted successfully!');
       setIsBookingOpen(false);
       setPurpose('');
       setDescription('');
       setAttendees('');
       setSelectedSlots([]);
       setTargetAudience('');
+      setFacultyRef('');
       setIsSubmitting(false);
     }, 1000);
   };
@@ -181,6 +209,19 @@ const VenueCard: React.FC<{ venue: Venue }> = ({ venue }) => {
                   <SelectItem value="All College">All College</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="faculty-reference">Faculty Reference (Optional)</Label>
+                <span className="text-xs text-gray-500">Adds high priority to your request</span>
+              </div>
+              <Input 
+                id="faculty-reference" 
+                placeholder="Name of supporting faculty member" 
+                value={facultyRef}
+                onChange={(e) => setFacultyRef(e.target.value)}
+              />
             </div>
             
             <div className="space-y-2">

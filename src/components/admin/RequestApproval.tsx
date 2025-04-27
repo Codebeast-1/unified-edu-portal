@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { bookings } from '@/services/mockData';
 import { Booking } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,20 @@ const RequestCard: React.FC<{ booking: Booking }> = ({ booking }) => {
     
     setIsSubmitting(true);
     
+    // Update the booking status in the mock data
+    const bookingIndex = bookings.findIndex(b => b.id === booking.id);
+    if (bookingIndex !== -1) {
+      bookings[bookingIndex] = {
+        ...bookings[bookingIndex],
+        status: action === 'approve' ? 'approved' : 'rejected',
+        adminFeedback: {
+          adminId: 'admin-1',
+          comment: feedback,
+          date: new Date().toISOString(),
+        }
+      };
+    }
+    
     // Simulate API call
     setTimeout(() => {
       toast.success(`Request ${action === 'approve' ? 'approved' : 'rejected'} successfully.`);
@@ -85,6 +99,9 @@ const RequestCard: React.FC<{ booking: Booking }> = ({ booking }) => {
           </p>
           <p className="text-sm text-gray-600">
             <span className="font-medium">Submitted on:</span> {formatDate(booking.createdAt)}
+          </p>
+          <p className="text-sm text-gray-600">
+            <span className="font-medium">Target audience:</span> {booking.targetAudience || 'Not specified'}
           </p>
           
           {booking.facultyRecommendation && (
@@ -186,16 +203,25 @@ const RequestCard: React.FC<{ booking: Booking }> = ({ booking }) => {
 };
 
 const RequestApproval: React.FC = () => {
+  // Force a re-render initially
+  const [, updateState] = useState<Object>();
+  const forceUpdate = React.useCallback(() => updateState({}), []);
+  
+  useEffect(() => {
+    // Force update when component mounts to ensure latest bookings are shown
+    forceUpdate();
+  }, [forceUpdate]);
+  
   const pendingRequests = bookings.filter(b => b.status === 'pending');
   const highPriorityRequests = bookings.filter(b => b.status === 'high-priority');
   
   const ltcrRequests = bookings.filter(
-    b => b.status === 'pending' && 
+    b => (b.status === 'pending' || b.status === 'high-priority') && 
     (b.venueName.includes('LT') || b.venueName.includes('CR'))
   );
   
   const eventRequests = bookings.filter(
-    b => b.status === 'pending' && 
+    b => (b.status === 'pending' || b.status === 'high-priority') && 
     !(b.venueName.includes('LT') || b.venueName.includes('CR'))
   );
   

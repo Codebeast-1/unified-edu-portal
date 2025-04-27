@@ -2,12 +2,17 @@
 import React from 'react';
 import { bookings } from '@/services/mockData';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, Calendar } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { 
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const ActivityList: React.FC = () => {
   const { user } = useAuth();
@@ -15,164 +20,105 @@ const ActivityList: React.FC = () => {
   // Filter bookings for the current user
   const userBookings = bookings.filter(booking => booking.userId === user?.id);
   
-  const pendingBookings = userBookings.filter(
-    booking => booking.status === 'pending' || booking.status === 'high-priority'
-  );
-  
-  const approvedBookings = userBookings.filter(booking => booking.status === 'approved');
-  const rejectedBookings = userBookings.filter(booking => booking.status === 'rejected');
-  
-  const handleCancelRequest = () => {
-    toast.success('Request cancelled successfully');
-  };
-  
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      month: 'short',
+      year: 'numeric',
     });
   };
   
-  const getStatusBadge = (status: string) => {
-    let bgColor = '';
-    
-    switch(status) {
-      case 'pending':
-        bgColor = 'bg-yellow-600';
-        break;
-      case 'high-priority':
-        bgColor = 'bg-red-600';
-        break;
+  const getStatusColor = (status: string) => {
+    switch (status) {
       case 'approved':
-        bgColor = 'bg-green-600';
-        break;
+        return 'bg-green-600';
       case 'rejected':
-        bgColor = 'bg-red-700';
-        break;
+        return 'bg-red-700';
+      case 'high-priority':
+        return 'bg-red-600';
+      case 'pending':
       default:
-        bgColor = 'bg-gray-600';
+        return 'bg-yellow-600';
     }
-    
-    return (
-      <Badge className={bgColor}>
-        {status === 'high-priority' ? 'Priority' : status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
   };
-  
-  const ActivityCard = ({ booking }: { booking: typeof bookings[0] }) => (
-    <Card className="mb-4 animate-scale-in hover:shadow-md transition-shadow">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-lg">{booking.purpose}</CardTitle>
-          {getStatusBadge(booking.status)}
-        </div>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="mb-4 text-sm space-y-2">
-          <p><span className="font-medium">Venue:</span> {booking.venueName}</p>
-          <p><span className="font-medium">Date Requested:</span> {formatDate(booking.createdAt)}</p>
-          <p><span className="font-medium">Attendees:</span> {booking.attendees}</p>
-          <p><span className="font-medium">Target Audience:</span> {booking.targetAudience || 'Not specified'}</p>
-        </div>
-        
-        {booking.adminFeedback && (
-          <div className="bg-gray-100 p-3 rounded-md mb-4">
-            <p className="text-sm font-medium">Admin Feedback:</p>
-            <p className="text-sm">{booking.adminFeedback.comment}</p>
-          </div>
-        )}
-        
-        {booking.status === 'pending' && (
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleCancelRequest}
-            className="text-red-600 hover:bg-red-50 hover:text-red-700 btn-animated"
-          >
-            Cancel Request
-          </Button>
-        )}
-      </CardContent>
-    </Card>
-  );
   
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6">My Activity</h2>
+      <h2 className="text-2xl font-bold mb-6">My Booking Activities</h2>
       
-      {userBookings.length === 0 ? (
-        <Card className="p-8 text-center animate-slide-in">
-          <div className="flex flex-col items-center justify-center">
-            <Calendar size={48} className="text-gray-400 mb-4" />
-            <h3 className="text-xl font-medium mb-2">No booking activity yet</h3>
-            <p className="text-gray-500 mb-4">You haven't made any booking requests yet.</p>
-            <div className="flex gap-3">
-              <Button className="bg-edu-primary hover:bg-edu-dark btn-animated">
-                Book a Venue
-                <ArrowRight size={16} className="ml-2" />
-              </Button>
-              <Button variant="outline" className="btn-animated">
-                Book an Event
-                <ArrowRight size={16} className="ml-2" />
-              </Button>
+      {userBookings.length > 0 ? (
+        <div className="space-y-6">
+          <Card className="overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Request Type</TableHead>
+                  <TableHead>Purpose/Event</TableHead>
+                  <TableHead>Venue</TableHead>
+                  <TableHead>Submitted On</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {userBookings.map((booking) => (
+                  <TableRow key={booking.id} className="hover:bg-slate-50">
+                    <TableCell className="font-medium">
+                      {booking.venueName.includes('LT') || booking.venueName.includes('CR') 
+                        ? 'Venue Booking' 
+                        : 'Event Package'}
+                    </TableCell>
+                    <TableCell>{booking.purpose}</TableCell>
+                    <TableCell>{booking.venueName}</TableCell>
+                    <TableCell>{formatDate(booking.createdAt)}</TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(booking.status)}>
+                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+          
+          <h3 className="text-xl font-medium mt-8 mb-4">Admin Feedback</h3>
+          {userBookings.some(booking => booking.adminFeedback) ? (
+            <div className="space-y-4">
+              {userBookings
+                .filter(booking => booking.adminFeedback)
+                .map(booking => (
+                  <Card key={`feedback-${booking.id}`} className="animate-scale-in">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium">{booking.purpose}</h4>
+                        <Badge className={getStatusColor(booking.status)}>
+                          {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                        </Badge>
+                      </div>
+                      <p className="text-sm mb-2">
+                        <span className="font-medium">Admin Feedback:</span> {booking.adminFeedback?.comment}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Provided on: {booking.adminFeedback ? formatDate(booking.adminFeedback.date) : ''}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
             </div>
-          </div>
-        </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <p className="text-gray-500">No feedback received from administrators yet.</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       ) : (
-        <Tabs defaultValue="pending">
-          <TabsList className="mb-6">
-            <TabsTrigger value="pending">
-              Pending
-              {pendingBookings.length > 0 && (
-                <Badge className="ml-2 bg-edu-primary h-5 w-5 flex items-center justify-center p-0">
-                  {pendingBookings.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="approved">Approved</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected</TabsTrigger>
-            <TabsTrigger value="all">All</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="pending">
-            {pendingBookings.length === 0 ? (
-              <p className="text-center text-gray-500">No pending requests</p>
-            ) : (
-              pendingBookings.map(booking => (
-                <ActivityCard key={booking.id} booking={booking} />
-              ))
-            )}
-          </TabsContent>
-          
-          <TabsContent value="approved">
-            {approvedBookings.length === 0 ? (
-              <p className="text-center text-gray-500">No approved requests</p>
-            ) : (
-              approvedBookings.map(booking => (
-                <ActivityCard key={booking.id} booking={booking} />
-              ))
-            )}
-          </TabsContent>
-          
-          <TabsContent value="rejected">
-            {rejectedBookings.length === 0 ? (
-              <p className="text-center text-gray-500">No rejected requests</p>
-            ) : (
-              rejectedBookings.map(booking => (
-                <ActivityCard key={booking.id} booking={booking} />
-              ))
-            )}
-          </TabsContent>
-          
-          <TabsContent value="all">
-            {userBookings.map(booking => (
-              <ActivityCard key={booking.id} booking={booking} />
-            ))}
-          </TabsContent>
-        </Tabs>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-gray-500">You haven't submitted any booking requests yet.</p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

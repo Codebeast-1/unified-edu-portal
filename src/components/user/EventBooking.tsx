@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { eventPackages } from '@/services/mockData';
+import { eventPackages, bookings } from '@/services/mockData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, Calendar, ArrowRight } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ const EventPackageCard: React.FC<{ eventPackage: typeof eventPackages[0] }> = ({
   const [targetAudience, setTargetAudience] = useState('');
   const [facultyRef, setFacultyRef] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
   
   const handleSubmit = () => {
     if (!eventName || !description || !attendees || !eventDate || !targetAudience) {
@@ -36,6 +38,33 @@ const EventPackageCard: React.FC<{ eventPackage: typeof eventPackages[0] }> = ({
     }
     
     setIsSubmitting(true);
+    
+    // Create new booking entry
+    const newBooking = {
+      id: uuidv4(),
+      userId: user?.id || 'user-1',
+      userName: user?.name || 'Test User',
+      userRole: (user?.role as 'student' | 'faculty') || 'student',
+      venueId: eventPackage.id,
+      venueName: eventPackage.name,
+      purpose: eventName,
+      description: description,
+      attendees: parseInt(attendees),
+      timeSlots: [eventDate], 
+      status: facultyRef ? 'high-priority' : 'pending',
+      createdAt: new Date().toISOString(),
+      targetAudience: targetAudience,
+      ...(facultyRef ? {
+        facultyRecommendation: {
+          facultyId: 'faculty-1',
+          facultyName: facultyRef,
+          comment: `Recommended by ${facultyRef}`,
+        }
+      } : {})
+    };
+    
+    // Add to bookings list
+    bookings.unshift(newBooking);
     
     // Simulate API call
     setTimeout(() => {
